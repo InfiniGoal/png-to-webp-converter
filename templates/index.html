@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>PNG to WebP Converter</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: Arial;
+            background: linear-gradient(135deg, #4e73df, #1cc88a);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .box {
+            background: white;
+            padding: 40px;
+            width: 500px;
+            border-radius: 15px;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 26px;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            background: #4e73df;
+            border: none;
+            color: white;
+            border-radius: 5px;
+            margin-top: 10px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #2e59d9;
+        }
+
+        input {
+            margin-top: 15px;
+        }
+
+        hr {
+            margin: 25px 0;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="box">
+    <h1>PNG ➜ WebP Converter</h1>
+
+    <!-- Single File -->
+    <h3>Convert Single Image</h3>
+    <form action="/convert" method="post" enctype="multipart/form-data">
+        <input type="file" name="image" accept=".png" required><br>
+        <button type="submit">Convert Image</button>
+    </form>
+
+    <hr>
+
+    <!-- Folder / Multiple Files -->
+    <h3>Convert Folder (Multiple Images)</h3>
+    <form action="/convert-folder" method="post" enctype="multipart/form-data">
+        <input type="file" name="images" accept=".png" multiple webkitdirectory directory><br>
+        <button type="submit">Convert Folder</button>
+    </form>
+
+</div>
+
+</body>
+</html>
