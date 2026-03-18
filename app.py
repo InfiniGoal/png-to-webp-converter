@@ -13,15 +13,21 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(CONVERTED_FOLDER, exist_ok=True)
 
 
-# 🔹 Function: Convert PNG → WebP (Keep Transparency)
-def png_to_webp_keep_transparency(input_path, output_path):
+# 🔹 Convert Image → WebP (Compressed)
+def image_to_webp(input_path, output_path):
     img = Image.open(input_path)
 
-    # Preserve transparency if present
-    if img.mode not in ("RGBA", "RGB"):
-        img = img.convert("RGBA")
+    # Resize large images (reduce size MB → KB)
+    img.thumbnail((1200, 1200))
 
-    img.save(output_path, "WEBP", lossless=True, method=6)
+    # Handle transparency
+    if img.mode in ("RGBA", "LA", "P"):
+        img = img.convert("RGBA")
+    else:
+        img = img.convert("RGB")
+
+    # Save compressed WebP
+    img.save(output_path, "WEBP", quality=80, method=6)
 
 
 @app.route("/")
@@ -42,7 +48,11 @@ def convert_image():
     output_filename = filename.rsplit(".", 1)[0] + ".webp"
     output_path = os.path.join(CONVERTED_FOLDER, output_filename)
 
-    png_to_webp_keep_transparency(input_path, output_path)
+    image_to_webp(input_path, output_path)
+
+    # Delete original file
+    if os.path.exists(input_path):
+        os.remove(input_path)
 
     return send_file(output_path, as_attachment=True)
 
@@ -52,28 +62,50 @@ def convert_image():
 def convert_folder():
     files = request.files.getlist("images")
 
-    zip_path = os.path.join(CONVERTED_FOLDER, "converted_images.zip")
+    if not files:
+        return "No files uploaded"
+
+    # 🔥 Get folder name from first file
+    first_file = files[0].filename
+
+    if "/" in first_file:
+        folder_name = first_file.split("/")[0]
+    else:
+        folder_name = "converted_images"
+
+    folder_name = secure_filename(folder_name)
+
+    zip_path = os.path.join(CONVERTED_FOLDER, f"{folder_name}.zip")
 
     with zipfile.ZipFile(zip_path, "w") as zipf:
         for file in files:
 
-            if not file.filename.lower().endswith(".png"):
+            if not file.filename.lower().endswith((".png", ".jpg", ".jpeg")):
                 continue
 
-            filename = secure_filename(file.filename)
+            # Remove folder path
+            filename = secure_filename(os.path.basename(file.filename))
+
             input_path = os.path.join(UPLOAD_FOLDER, filename)
 
+            # Save original file
             file.save(input_path)
 
+            # Convert
             output_filename = filename.rsplit(".", 1)[0] + ".webp"
             output_path = os.path.join(CONVERTED_FOLDER, output_filename)
 
-            png_to_webp_keep_transparency(input_path, output_path)
+            image_to_webp(input_path, output_path)
 
+            # Add to ZIP
             zipf.write(output_path, output_filename)
+
+            # 🔥 Delete original file
+            if os.path.exists(input_path):
+                os.remove(input_path)
 
     return send_file(zip_path, as_attachment=True)
 
 
 if __name__ == "__main__":
-   app.run(debug=True, port=5001)
+    app.run(debug=True, port=5001)
